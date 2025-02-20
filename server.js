@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -12,18 +13,26 @@ app.use(express.json()); // Ermöglicht JSON-Parsing in Anfragen
 
 // Dynamischer Pfad für SQLite-Datenbank (Railway-kompatibel)
 const dbPath = process.env.DATABASE_URL || path.join(__dirname, 'db.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
+
+// Prüfen, ob die Datenbankdatei existiert
+if (!fs.existsSync(dbPath)) {
+  console.error(`❌ Fehler: Die SQLite-Datenbank wurde nicht gefunden: ${dbPath}`);
+  process.exit(1);
+}
+
+// Verbindung zur SQLite-Datenbank herstellen
+const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
   if (err) {
     console.error('❌ Fehler bei der Verbindung zur SQLite-Datenbank:', err.message);
-  } else {
-    console.log(`✅ Erfolgreich mit der SQLite-Datenbank verbunden: ${dbPath}`);
+    process.exit(1);
   }
+  console.log(`✅ Erfolgreich mit der SQLite-Datenbank verbunden: ${dbPath}`);
 });
 
 // Sicherheits-Header entfernen
 app.disable('x-powered-by');
 
-// API-Endpunkt für Produktinformationen
+// 🛒 API-Endpunkt für Produktinformationen
 app.get('/api/product-info', (req, res) => {
   db.all('SELECT * FROM product_info', [], (err, rows) => {
     if (err) {
@@ -34,12 +43,12 @@ app.get('/api/product-info', (req, res) => {
   });
 });
 
-// Weiterleitung für Produktanfragen
+// 🔄 Weiterleitung für Produktanfragen
 app.get('/api/products', (req, res) => {
   res.status(307).redirect('/api/product-info'); // 307 erhält die HTTP-Methode
 });
 
-// API-Endpunkt für FAQs
+// ❓ API-Endpunkt für FAQs
 app.get('/api/faq', (req, res) => {
   db.all('SELECT * FROM faq', [], (err, rows) => {
     if (err) {
@@ -50,7 +59,7 @@ app.get('/api/faq', (req, res) => {
   });
 });
 
-// Statische Antworten für allgemeine Anfragen
+// ℹ️ Statische Antworten für allgemeine Anfragen
 app.get('/api/company', (req, res) => {
   res.json({ message: 'PeakTech ist ein führender Anbieter von Mess- und Prüfgeräten.' });
 });
@@ -67,7 +76,7 @@ app.get('/api/other', (req, res) => {
   res.json({ message: 'Bitte beschreiben Sie Ihr Anliegen.' });
 });
 
-// Server starten
+// 🏁 Server starten
 app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Server läuft unter http://0.0.0.0:${port}`);
-});
+  console.log(`🚀 Server läuft unter http://
+
