@@ -1,20 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 8080;
 
 // Middleware
-app.use(cors());
+app.use(cors()); // تنظیم CORS
 app.use(express.json());
 
-// Verbindung zur SQLite-Datenbank herstellen
-const db = new sqlite3.Database('./db.sqlite', (err) => {
+// Dynamischer Pfad für SQLite-Datenbank (wichtig für Railway)
+const dbPath = path.join(__dirname, 'db.sqlite');
+const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('❌ Fehler bei der Verbindung zur Datenbank:', err.message);
   } else {
-    console.log('✅ Erfolgreich mit der SQLite-Datenbank verbunden.');
+    console.log(`✅ Erfolgreich mit der SQLite-Datenbank verbunden: ${dbPath}`);
   }
 });
 
@@ -23,54 +25,41 @@ app.disable('x-powered-by');
 
 // API-Endpunkt für Produktinformationen
 app.get('/api/product-info', async (req, res) => {
-  try {
-    db.all('SELECT * FROM product_info', [], (err, rows) => {
-      if (err) {
-        console.error('❌ Fehler beim Abrufen der Produktinformationen:', err.message);
-        return res.status(500).json({ error: 'Fehler beim Abrufen der Produktinformationen.' });
-      }
-      res.json({ data: rows });
-    });
-  } catch (error) {
-    console.error('❌ Fehler:', error.message);
-    res.status(500).json({ error: 'Interner Serverfehler' });
-  }
+  db.all('SELECT * FROM product_info', [], (err, rows) => {
+    if (err) {
+      console.error('❌ Fehler beim Abrufen der Produktinformationen:', err.message);
+      return res.status(500).json({ error: 'Fehler beim Abrufen der Produktinformationen.' });
+    }
+    res.json({ data: rows });
+  });
 });
 
 // Weiterleitung für Produktanfragen
 app.get('/api/products', (req, res) => {
-  res.status(307).redirect('/api/product-info'); // 307 behält die HTTP-Methode bei
+  res.status(307).redirect('/api/product-info');
 });
 
 // API-Endpunkt für FAQs
 app.get('/api/faq', async (req, res) => {
-  try {
-    db.all('SELECT * FROM faq', [], (err, rows) => {
-      if (err) {
-        console.error('❌ Fehler beim Abrufen der FAQs:', err.message);
-        return res.status(500).json({ error: 'Fehler beim Abrufen der FAQs.' });
-      }
-      res.json({ data: rows });
-    });
-  } catch (error) {
-    console.error('❌ Fehler:', error.message);
-    res.status(500).json({ error: 'Interner Serverfehler' });
-  }
+  db.all('SELECT * FROM faq', [], (err, rows) => {
+    if (err) {
+      console.error('❌ Fehler beim Abrufen der FAQs:', err.message);
+      return res.status(500).json({ error: 'Fehler beim Abrufen der FAQs.' });
+    }
+    res.json({ data: rows });
+  });
 });
 
 // Statische Antworten für allgemeine Anfragen
 app.get('/api/company', (req, res) =>
   res.json({ message: 'PeakTech ist ein führender Anbieter von Mess- und Prüfgeräten.' })
 );
-
 app.get('/api/support', (req, res) =>
   res.json({ message: 'Kontakt: support@peaktech.de, +49 4102 97398-0.' })
 );
-
 app.get('/api/orders', (req, res) =>
   res.json({ message: 'Bitte geben Sie Ihre Bestellnummer ein.' })
 );
-
 app.get('/api/other', (req, res) =>
   res.json({ message: 'Bitte beschreiben Sie Ihr Anliegen.' })
 );
