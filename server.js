@@ -78,5 +78,5 @@ app.get('/api/other', (req, res) => {
 
 // 🏁 Server starten
 app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Server läuft unter http://
-
+  console.log(`🚀 Server läuft unter http://0.0.0.0:${port}`);
+});
